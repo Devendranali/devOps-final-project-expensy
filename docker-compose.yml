@@ -1,6 +1,5 @@
-
 services:
-
+  # ---------- MongoDB ----------
   expensy_mongodb:
     image: mongo:6
     container_name: expensy_mongodb
@@ -8,23 +7,21 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
-    ports:
-      - "27017:27017"
     volumes:
       - mongo_data:/data/db
     networks:
       - expensy_network
 
+  # ---------- Redis ----------
   expensy_redis:
     image: redis:7
     container_name: expensy_redis
     restart: always
     command: ["redis-server", "--requirepass", "someredispassword"]
-    ports:
-      - "6379:6379"
     networks:
       - expensy_network
 
+  # ---------- Backend ----------
   expensy_backend:
     container_name: expensy_backend
     build:
@@ -32,15 +29,16 @@ services:
       dockerfile: Dockerfile
     restart: always
     env_file:
-      - ./.env
+      - ./.env  # Backend config (DB, Redis, port)
     depends_on:
       - expensy_mongodb
       - expensy_redis
     ports:
-      - "8706:8706"
+      - "8706:8706"      # publish backend port to host
     networks:
       - expensy_network
 
+  # ---------- Frontend ----------
   expensy_frontend:
     container_name: expensy_frontend
     build:
@@ -48,18 +46,20 @@ services:
       dockerfile: Dockerfile
     restart: always
     env_file:
-      - ./.env
+      - ./.env  # Frontend config (NEXT_PUBLIC_API_URL=https://expency.vanthiyadevan.store/api)
     depends_on:
       - expensy_backend
     ports:
-      - "3000:3000"
+      - "3000:3000"      # publish frontend port to host
     networks:
       - expensy_network
 
+# ---------- Networks ----------
 networks:
   expensy_network:
     driver: bridge
 
+# ---------- Volumes ----------
 volumes:
   mongo_data:
 
